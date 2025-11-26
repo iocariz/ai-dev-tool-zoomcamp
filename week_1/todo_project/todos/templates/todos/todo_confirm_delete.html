@@ -1,0 +1,17 @@
+{% extends 'todos/base.html' %}
+
+{% block content %}
+<div class="card" style="text-align: center; max-width: 500px; margin: 0 auto;">
+    <h2 style="margin-bottom: 1rem;">Delete Task?</h2>
+    <p style="margin-bottom: 2rem; color: var(--text-muted);">Are you sure you want to delete "{{ object.title }}"? This
+        action cannot be undone.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <div style="display: flex; gap: 1rem; justify-content: center;">
+            <button type="submit" class="btn btn-danger">Delete</button>
+            <a href="{% url 'todo-list' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

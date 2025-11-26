@@ -1,0 +1,33 @@
+{% extends 'todos/base.html' %}
+
+{% block content %}
+<div class="card">
+    <h2 style="margin-bottom: 1.5rem;">{% if object %}Edit Task{% else %}New Task{% endif %}</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="id_title">Title</label>
+            <input type="text" name="title" maxlength="200" required id="id_title" value="{{ form.title.value|default_if_none:'' }}">
+        </div>
+        <div class="form-group">
+            <label for="id_description">Description</label>
+            <textarea name="description" cols="40" rows="4" id="id_description">{{ form.description.value|default_if_none:'' }}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="id_due_date">Due Date</label>
+            <input type="datetime-local" name="due_date" id="id_due_date" value="{{ form.due_date.value|date:'Y-m-d\TH:i' }}">
+        </div>
+        {% if object %}
+        <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" name="is_resolved" id="id_is_resolved" {% if form.is_resolved.value %}checked{% endif %}>
+            <label for="id_is_resolved" style="margin-bottom: 0;">Mark as Resolved</label>
+        </div>
+        {% endif %}
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary">Save Task</button>
+            <a href="{% url 'todo-list' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
