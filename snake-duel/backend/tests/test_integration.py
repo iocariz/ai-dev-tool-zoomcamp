@@ -10,16 +10,18 @@ from app.main import app
 from app.db import get_db, Base
 from app.database import active_games
 
-# Use a FILE-based SQLite database for integration testing
-# This ensures we test actual file persistence, not just memory
+# Use environment variable for DB URL or fallback to SQLite file
 TEST_DB_FILE = "./test_integration.db"
-TEST_DATABASE_URL = f"sqlite+aiosqlite:///{TEST_DB_FILE}"
+TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", f"sqlite+aiosqlite:///{TEST_DB_FILE}")
 
-# Use NullPool to ensure connections are closed immediately so we can drop the file easily
+# Configure engine args based on DB type
+engine_args = {"poolclass": NullPool}
+if "sqlite" in TEST_DATABASE_URL:
+    engine_args["connect_args"] = {"check_same_thread": False}
+
 engine = create_async_engine(
     TEST_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=NullPool,
+    **engine_args
 )
 IntegrationSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
@@ -31,7 +33,8 @@ async def override_get_integration_db() -> AsyncGenerator[AsyncSession, None]:
 @pytest.fixture(scope="module", autouse=True)
 async def setup_integration_db():
     # Remove existing test DB if any
-    if os.path.exists(TEST_DB_FILE):
+    # Remove existing test DB file if using SQLite
+    if "sqlite" in TEST_DATABASE_URL and os.path.exists(TEST_DB_FILE):
         os.remove(TEST_DB_FILE)
     
     # Create tables
@@ -47,7 +50,7 @@ async def setup_integration_db():
     # Close engine to release file lock
     await engine.dispose()
     
-    if os.path.exists(TEST_DB_FILE):
+    if "sqlite" in TEST_DATABASE_URL and os.path.exists(TEST_DB_FILE):
         os.remove(TEST_DB_FILE)
 
 @pytest.fixture

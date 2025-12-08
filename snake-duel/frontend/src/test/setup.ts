@@ -1,5 +1,9 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
+import { OpenAPI } from '@/client';
+
+// Configure API base for tests
+OpenAPI.BASE = 'http://localhost:3000';
 
 const createStorageMock = () => {
   let store: Record<string, string> = {};
