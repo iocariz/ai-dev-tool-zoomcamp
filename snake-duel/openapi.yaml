@@ -1,0 +1,308 @@
+openapi: 3.0.0
+info:
+  title: Snake Duel API
+  description: API for the Snake Duel game
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+paths:
+  /auth/login:
+    post:
+      summary: Login user
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+
+  /auth/signup:
+    post:
+      summary: Register new user
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - password
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Successful registration
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+
+  /auth/logout:
+    post:
+      summary: Logout user
+      tags: [Auth]
+      responses:
+        '200':
+          description: Successful logout
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        nullable: true
+
+  /auth/me:
+    get:
+      summary: Get current user
+      tags: [Auth]
+      security:
+        - bearerAuth: [] 
+      responses:
+        '200':
+          description: Current user session
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+
+  /leaderboard:
+    get:
+      summary: Get leaderboard entries
+      tags: [Leaderboard]
+      parameters:
+        - name: mode
+          in: query
+          schema:
+            $ref: '#/components/schemas/GameMode'
+          required: false
+      responses:
+        '200':
+          description: List of leaderboard entries
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/LeaderboardEntry'
+
+    post:
+      summary: Submit a new score
+      tags: [Leaderboard]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - score
+                - mode
+              properties:
+                score:
+                  type: number
+                mode:
+                  $ref: '#/components/schemas/GameMode'
+                # Username is likely inferred from session, but current frontend code passes 'username' too?
+                # Looking at code: submitScore(username: string, score: number, mode: GameMode)
+                username:
+                  type: string
+      responses:
+        '200':
+          description: Score submitted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/LeaderboardEntry'
+
+  /games/active:
+    get:
+      summary: Get all active players
+      tags: [Game]
+      responses:
+        '200':
+          description: List of active players
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ActivePlayer'
+
+  /games/active/{id}:
+    get:
+      summary: Get active player by ID
+      tags: [Game]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Active player details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ActivePlayer'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ApiResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+        error:
+          type: string
+          nullable: true
+        data:
+          nullable: true
+          description: Payload data, structure depends on endpoint
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        createdAt:
+          type: string
+          format: date-time
+
+    GameMode:
+      type: string
+      enum: [walls, pass-through]
+
+    Direction:
+      type: string
+      enum: [UP, DOWN, LEFT, RIGHT]
+
+    GameStatus:
+      type: string
+      enum: [idle, playing, paused, game-over]
+
+    Position:
+      type: object
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        score:
+          type: number
+        mode:
+          $ref: '#/components/schemas/GameMode'
+        createdAt:
+          type: string
+          format: date-time
+
+    ActivePlayer:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        score:
+          type: number
+        mode:
+          $ref: '#/components/schemas/GameMode'
+        snake:
+          type: array
+          items:
+            $ref: '#/components/schemas/Position'
+        food:
+          $ref: '#/components/schemas/Position'
+        direction:
+          $ref: '#/components/schemas/Direction'
+        status:
+          $ref: '#/components/schemas/GameStatus'
