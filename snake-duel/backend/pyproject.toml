@@ -26,3 +26,7 @@ dev = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+filterwarnings = [
+    "ignore:'crypt' is deprecated:DeprecationWarning",
+    "ignore:Accessing argon2.__version__ is deprecated:DeprecationWarning",
+]

@@ -3,7 +3,7 @@ import { AuthService, LeaderboardService, OpenAPI } from '@/client';
 import { mockActivePlayers, generateRandomFood } from './mockData';
 
 // Configure Base URL
-OpenAPI.BASE = 'http://localhost:3000';
+OpenAPI.BASE = import.meta.env.VITE_API_URL || '/api';
 
 // Helper to handle client errors and fallback to app response format
 const handleApiError = (error: any): AppApiResponse<any> => {
